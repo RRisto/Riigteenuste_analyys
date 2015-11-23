@@ -4,7 +4,7 @@ Riigiteenuste andmed, mis on masinloetaval kujul, analüsimise skriptide kogum. 
 
 ###Retsept, kuidas andmed sisse saada
 
-- Loe sisse funktsioonid lehtedelt andmedLai.r, andmedPikaks.r
+- Loe sisse funktsioonid lehtedelt [andmedLai.r](https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedLai.R "https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedLai.R"), [andmedPikaks.r](https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedPikaks.R "https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedPikaks.R")
 
 - Loe andmed sisse pikana:
 ```{r, eval=FALSE}
@@ -12,7 +12,7 @@ andmedLai=fromJsonLong(andmedJson=readLines("https://www.riigiteenused.ee/api/et
 
 ```
 
-- Eemlda veerud, mida ei vaja
+- Eemalda veerud, mida ei vaja
 
 - Jaga andmed aastate järgi osadeks:
 

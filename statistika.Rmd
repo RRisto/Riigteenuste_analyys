@@ -7,7 +7,7 @@ output: html_document
 
 ###Statistika näidised
 
-Kui andmed on sisse laetud ja pikaks tehtud saab teha statistikat. Enne lae lehelt Statistika.r funktsioonid sisse.
+Kui andmed on sisse laetud ja pikaks tehtud saab teha statistikat. Enne lae lehelt [Statistika.r](https://github.com/RRisto/Riigteenuste_analyys/blob/master/Statistika.R "https://github.com/RRisto/Riigteenuste_analyys/blob/master/Statistika.R") funktsioonid sisse.
 ```{r, echo=FALSE, cache=TRUE, message=FALSE, warning=FALSE}
 #näidise ettevalmistus
 fromJsonLong=function(andmedJson) {
