@@ -1,6 +1,7 @@
-library(dplyr)
-#teeme funktsiooni
-summary2=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
+#####abifunktsioonid, näidised statistika tegemiseks
+
+#abifunktsioon andmete summeerimiseks
+summeerija=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
   library(dplyr)
   tulem=data %>%
     group_by_(...) %>%
@@ -10,23 +11,69 @@ summary2=function(data, ...) { #... paned jutumärkidesse variabled mille järgi
   tulem
 }
 
+#abifunktsioon andmete visualiseerimiseks
+visualiseerija=function(data, mapping, ylab) {
+  #localenv <- environment()
+  library(ggplot2)
+  library(scales)
+  ggplot(data, mapping)+
+    geom_bar(stat = "identity", fill="lightblue")+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
+    xlab("")+
+    ylab(ylab)+
+    coord_cartesian(ylim=c(0,1))+
+    scale_y_discrete(labels = percent)
+}
+
+##abifunktsion sihtgrupi andmete visualiseerimiseks
+sihtgruppStat=function(andmed) {
+  sihtgrupp=andmed[,c("allasutus","sihtgrupp")]
+  #loome sihtgrupi eraldi colmnitesse
+  sihtgrupp$kodanik=ifelse(grepl("Kodanik",andmed$sihtgrupp), "Kodanik", NA)
+  sihtgrupp$ettevotja=ifelse(grepl("Ettevõtja",andmed$sihtgrupp), "Ettevõtja", NA)
+  sihtgrupp$ametnik=ifelse(grepl("Ametnik",andmed$sihtgrupp), "Ametnik", NA)
+  #algset colmnit pole vaja
+  sihtgrupp$sihtgrupp=NULL
+  #meldime
+  library(reshape2)
+  sihtgruppMelt=melt(sihtgrupp, id=c("allasutus"), measure.vars = c("kodanik",
+                                                                    "ettevotja", 
+                                                                    "ametnik"))
+  #NAd eemaldame
+  sihtgruppMelt=sihtgruppMelt[complete.cases(sihtgruppMelt[3]),]
+  #arvutame välja
+  library(dplyr)
+  Asutuse_sihtgrupi_loikes=sihtgruppMelt %>%
+    group_by(allasutus, value) %>%
+    summarize(teenusteArv=n())
+  #plotime
+  library(ggplot2)
+  ggplot(Asutuse_sihtgrupi_loikes, aes(x=allasutus, y=teenusteArv))+
+    geom_bar(stat="identity")+
+    facet_wrap(~value)+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+##########näidised####################################
+
 #summeerime iga asutuse kõikide kanalite ja näitajate lõikes 
-summaryAsutusKanalNait =summary2(data=andmed,  "allasutus", "kanal", "naitaja")
+summaryAsutusKanalNait =summeerija(data=andmedPikk,  "allasutus", "kanal", "naitaja")
 
 #keskmine tõenäosus, et kanali konkreetse näitaja kohta on stat (%)
-nrow(subset(andmed, value!=0))/length(andmed$value)*100
+nrow(subset(andmedPikk, value!=0))/length(andmedPikk$value)*100
 
 #tõenäosus, et kanali kohta on mingi stat
-summaryKanal =summary2(data=andmed,  "kanal")
+summaryKanal =summeerija(data=andmedPikk,  "kanal")
 
 #tõenäosus, et näitaja kohta on stat olemas
-summaryNaitaja =summary2(data=andmed,  "naitaja")
+summaryNaitaja =summeerija(data=andmedPikk,  "naitaja")
 
 #tõenäosus, et stat on asutuste, näitajate lõikes olemas
-summaryAsutusNaitaja =summary2(data=andmed, "allasutus", "naitaja")
+summaryAsutusNaitaja =summeerija(data=andmedPikk, "allasutus", "naitaja")
 
 #tõenäosus, et stat on olemas asutuste lõikes
-summaryAsutus =summary2(data=andmed, "allasutus")
+summaryAsutus =summeerija(data=andmedPikk, "allasutus")
 
 ######################visualiseerimine
 
@@ -35,67 +82,38 @@ summaryAsutus =summary2(data=andmed, "allasutus")
 summaryAsutus <- transform(summaryAsutus, 
                            jrk = reorder(allasutus, -stat_olemas_pr))
 
-library(ggplot2)
-library(scales)
-ggplot(summaryAsutus, aes(x=jrk, y=stat_olemas_pr))+
-  geom_bar(stat = "identity", fill="lightblue")+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
-  xlab("")+
-  ylab("Olemasolevate näidikute osakaal")+
-  scale_y_continuous(labels = percent)
+visualiseerija(data=summaryAsutus, aes(x=jrk, y=stat_olemas_pr), 
+               "Olemasolevate näidikute osakaal")
 
 #kanalite lõikes
 summaryKanal <- transform(summaryKanal, 
                           jrk = reorder(kanal, -stat_olemas_pr))
 
-library(ggplot2)
-library(scales)
-ggplot(summaryKanal, aes(x=jrk, y=stat_olemas_pr))+
-  geom_bar(stat = "identity", fill="lightblue")+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
-  xlab("")+
-  ylab("Olemasolevate näidikute osakaal")+
-  scale_y_continuous(labels = percent)
+visualiseerija(data=summaryKanal, aes(x=jrk, y=stat_olemas_pr), 
+               "Olemasolevate näidikute osakaal")
 
 #näitajate lõikes
 summaryNaitaja <- transform(summaryNaitaja, 
                             jrk = reorder(naitaja, -stat_olemas_pr))
 
-library(ggplot2)
-library(scales)
-ggplot(summaryNaitaja, aes(x=jrk, y=stat_olemas_pr))+
-  geom_bar(stat = "identity", fill="lightblue")+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
-  xlab("")+
-  ylab("Olemasolevate näidikute osakaal")+
-  scale_y_continuous(labels = percent)
+visualiseerija(data=summaryNaitaja, aes(x=jrk, y=stat_olemas_pr), 
+               "Olemasolevate näidikute osakaal")
 
 #asutuse ja naitaja loikes
 summaryAsutusNaitaja <- transform(summaryAsutusNaitaja, 
                                   jrk = reorder(naitaja,-stat_olemas_pr))
 
-library(ggplot2)
-library(scales)
-ggplot(summaryAsutusNaitaja, aes(x=jrk, y=stat_olemas_pr))+
-  geom_bar(stat = "identity", fill="lightblue")+
-  facet_wrap(~allasutus)+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
-  xlab("")+
-  ylab("Olemasolevate näidikute osakaal")+
-  scale_y_continuous(labels = percent)
+visualiseerija(data=summaryAsutusNaitaja, aes(x=jrk, y=stat_olemas_pr), 
+               "Olemasolevate näidikute osakaal")+
+  facet_wrap(~allasutus)
 
 ####################üldine stat
 #teenuste arv asutuste lõikes
-#kõlbab dataFlat
-teenusteArv=as.data.frame(table(dataFlat$allasutus))
+teenusteArv=as.data.frame(table(andmedLai$allasutus))
 
 #kanalite arv asutuste lõikes
 library(dplyr)
-kanaliteArv=andmed %>%
+kanaliteArv=andmedPikk %>%
   group_by(allasutus) %>%
   summarize(kanal_arv=sum(naitaja=="osutamistearv")) 
 
@@ -106,34 +124,5 @@ kanaliteArv$teenuste_arv=teenusteArv$Freq
 kanaliteArv$KeskKanaliteArv=kanaliteArv$kanal_arv/kanaliteArv$teenuste_arv
 
 #############tahan infot asutuse ja sihtgrupi lõikes
-library(jsonlite)
-#data=fromJSON("teenused_all.json")
-data=fromJSON("2015-11-22_riigiteenused.json")
-sihtgrupp=data[,c("allasutus","sihtgrupp")]
+sihtgruppStat(andmedLai)
 
-#loome sihtgrupi eraldi colmnitesse
-sihtgrupp$kodanik=ifelse(grepl("Kodanik",data$sihtgrupp), "Kodanik", NA)
-sihtgrupp$ettevotja=ifelse(grepl("Ettevõtja",data$sihtgrupp), "Ettevõtja", NA)
-sihtgrupp$ametnik=ifelse(grepl("Ametnik",data$sihtgrupp), "Ametnik", NA)
-#algset colmnit pole vaja
-sihtgrupp$sihtgrupp=NULL
-
-#meldime
-library(reshape2)
-sihtgruppMelt=melt(sihtgrupp, id=c("allasutus"), measure.vars = c("kodanik", "ettevotja", "ametnik"))
-#NAd eemaldame
-sihtgruppMelt=sihtgruppMelt[complete.cases(sihtgruppMelt[3]),]
-#arvutame välja
-library(dplyr)
-Asutuse_sihtgrupi_loikes=sihtgruppMelt %>%
-  group_by(allasutus, value) %>%
-  summarize(teenusteArv=n())
-
-Asutuse_sihtgrupi_loikes
-
-#plotime
-library(ggplot2)
-ggplot(Asutuse_sihtgrupi_loikes, aes(x=allasutus, y=teenusteArv))+
-  geom_bar(stat="identity")+
-  facet_wrap(~value)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))

@@ -1,3 +1,5 @@
+###katsetus, mis ei andnud soovitud tulemust!!!
+
 library(jsonlite)
 andmed=fromJSON("2015-11-01_riigiteenused.json", flatten=F)
 kanalid=andmed$teenuste_kanalid_ja_moodikud

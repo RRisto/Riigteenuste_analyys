@@ -1,0 +1,35 @@
+##Riigiteenuste andmete analüüs
+
+Riigiteenuste andmed, mis on masinloetaval kujul, analüsimise skriptide kogum. Andmed on JSON formaadis kättesaadavad [siit](https://www.riigiteenused.ee/api/et/all "https://www.riigiteenused.ee/api/et/all"). Kogu projekti kohta loe [siit](https://github.com/MKM-ITAO/riigiteenused "https://github.com/MKM-ITAO/riigiteenused").
+
+###Retsept, kuidas andmed sisse saada
+
+- Loe sisse funktsioonid lehtedelt andmedLai.r, andmedPikaks.r
+
+- Loe andmed sisse pikana:
+```{r, eval=FALSE}
+andmedLai=fromJsonLong(andmedJson=readLines("https://www.riigiteenused.ee/api/et/all"))
+
+```
+
+- Eemlda veerud, mida ei vaja
+
+- Jaga andmed aastate järgi osadeks:
+
+```{r, eval=FALSE}
+andmedLai2014=andmedLai[, !grepl("empty.", names(andmedLai))]
+#siin pole statistikat, pole ka mõõtmise aastat selle tõttu, nimeks Empty
+andmedLaiEmpty=andmedLai[, !grepl("X2014.", names(andmedLai))]
+
+```
+
+- Tee andmed pikaks ja pane kokku tagasi:
+
+```{r, eval=FALSE}
+puhas2014=korrastaja(andmedLai2014, "X2014.")
+puhasEmpty=korrastaja(andmedLaiEmpty, "empty.")
+#paneme andmed kokku
+andmedPikk=rbind(puhas2014, puhasEmpty)
+
+```
+
