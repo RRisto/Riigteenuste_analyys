@@ -35,4 +35,4 @@ andmedPikk=rbind(puhas2014, puhasEmpty)
 
 ###Statistika
 
-Selle kohta loe [siit](http://htmlpreview.github.io/?https://github.com/RRisto/Riigteenuste_analyys/blob/master/statistika.html "http://htmlpreview.github.io/?https://github.com/RRisto/Riigteenuste_analyys/blob/master/statistika.html")
+Selle kohta loe [siit](https://htmlpreview.github.io/?https://github.com/RRisto/Riigteenuste_analyys/blob/master/Statistika/statistika.html "https://htmlpreview.github.io/?https://github.com/RRisto/Riigteenuste_analyys/blob/master/Statistika/statistika.html")
