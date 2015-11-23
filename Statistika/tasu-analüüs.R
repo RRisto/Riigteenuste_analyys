@@ -1,25 +1,7 @@
-##############################
-#########################################kui palju on tasulisi, tasuta teenuseid kanalite lõikes
-#andmed flatiks kõige pealt
-library(jsonlite)
-#esialgu lae käsitsi alla ning salvesta directorisse
-data=fromJSON("teenused_all.json")
-dataFlat=flatten(data, recursive = T)
-#eemaldan ebavajalikud muutujad NB! erinevad, mis eespool on
-vars=names(dataFlat) %in% c("regulatsioon", "objectId", "eluarisyndmus", "kirjeldus", 
-                            "eeltingimus", "jareltingimus", "createdAt", "updatedAt", "keel",
-                            "ministeerium", "osakondyksus", "omanikunimi", 
-                            "omanikuamet", "omanikutelefon", "omanikuemail", "konfinfo", 
-                            "seotuddokumendid", "seisund", 
-                            "muudatustvajav", "aegumisekpv", "funktsioon", "veebiaadress")
-dataFlat=dataFlat[!vars]
+#########################################kui palju on tasulisi, tasuta teenuseid 
+#kanalite lõikes
 
-#teeme 2 dataseti, üks selle jaoks, milles pole stat (empty), teine 2014 a stati kohta
-#tulevikus kui aastaid tuleb juurde, siis tuleb neid veelgi teha
-dataFlat2014=dataFlat[, !grepl("teenuste_kanalid_ja_moodikud.2014", names(dataFlat))]
-dataFlatEmpty=dataFlat[, !grepl("teenuste_kanalid_ja_moodikud.empty", names(dataFlat))]
-
-#teen kohandatud funktsiooni metlimiseks et saaks ka muid variable kaasata
+#teen kohandatud funktsiooni metlimiseks et saaks ka muid muutujaid kaasata
 meltimine2=function(kanal, data) {
         library(reshape2)
         #leiame ainult seda kanalit puudutavad muutujad
@@ -38,28 +20,36 @@ meltimine2=function(kanal, data) {
         tulem
 }
 
-#testime
-iseteen=meltimine2(kanal="E-iseteenindus", data=dataFlat2014)
+#näide
+iseteen=meltimine("E.iseteenindus.", data=dataFlat2014)
 
-#eelnev funktsiooniks
+#korrastaja funktsiooni kohandame ka
 korrastaja2=function(andmed, eemalda) {
         library(reshape2)
         #eemalda - mis osa columnite nimedest tuleb eemdalda
         names(andmed)=gsub(pattern=eemalda,"" ,names(andmed))
         #kanalite lõikes meldime
-        iseteen=meltimine2("E-iseteenindus", data=andmed)
-        telefon=meltimine2("Telefon", data=andmed)
+        veeb=meltimine2("Veebileht...portaal.", data=andmed)
+        iseteen=meltimine2("E.iseteenindus.", data=andmed)
+        eesti=meltimine2("Eesti.ee.", data=andmed)
+        nuti=meltimine2("Nutirakendus.", data=andmed)
+        digitv=meltimine2("Digitelevisioon.", data=andmed)
+        epost=meltimine2("E.post.", data=andmed)
+        sms=meltimine2("Tekstisõnum.", data=andmed)
+        telefon=meltimine2("Telefon.", data=andmed)
+        faks=meltimine2("Faks.", data=andmed)
+        post=meltimine2("Post.", data=andmed)
         lett=meltimine2("Letiteenus", data=andmed)
-        veeb=meltimine2("Veebileht", data=andmed)
-        eesti=meltimine2("Eesti.ee", data=andmed)
-        epost=meltimine2("E-post", data=andmed)
-        kodus=meltimine2("Kliendi juures", data=andmed)
+        kodus=meltimine2("Kliendi.juures.", data=andmed)
         #rbindime
-        koos=rbind(iseteen, telefon, lett, veeb, eesti, epost, kodus)
-        #leiame kanali ja näitaja
-        #kanal <- strsplit(as.character(koos$variable), split ="\\.\\w{1,}$")
+        koos=rbind(veeb, iseteen, eesti, nuti, digitv, epost, sms, telefon, faks, 
+                   post, lett, kodus)        #leiame kanali ja näitaja
         #stati saamiseks eemaldame .ee eesti.ee-st need põhujstavad muidu probleeme
-        stat=gsub(".ee.", ".", as.character(koos$variable), fixed=T)
+        koos$variable=gsub(".ee.", ".", as.character(koos$variable), fixed=T)
+        koos$variable=gsub("E.iseteenindus", "Eiseteenindus", as.character(koos$variable), fixed=T)
+        koos$variable=gsub("E.post", "Epost", as.character(koos$variable), fixed=T)
+        koos$variable=gsub("Veebileht...portaal", "Veebileht", as.character(koos$variable), fixed=T)
+        stat=gsub("Kliendi.juures", "Kliendijuures", as.character(koos$variable), fixed=T)
         #lõikame punktini asja maha
         stat <- strsplit(stat, split ="\\.")
         #teeme df-ks
@@ -67,16 +57,16 @@ korrastaja2=function(andmed, eemalda) {
         #transponeerime
         df=as.data.frame(t(df))
         #lisame algsesse andmestikku
-        koos$kanal=df[,3]
-        koos$naitaja=df[,4]
+        koos$kanal=df[,1]
+        koos$naitaja=df[,2]
         #viskame välja tühjad read, kus pole linki
         koos=koos[!is.na(koos$link),]
         koos
 }
 
-#teeme funktsioonidega parakas andmed
-puhas2014=korrastaja2(dataFlat2014, "teenuste_kanalid_ja_moodikud.2014")
-puhasEmpty=korrastaja2(dataFlatEmpty, "teenuste_kanalid_ja_moodikud.empty")      
+#teeme funktsioonidega parajaks andmed
+puhas2014=korrastaja2(dataFlat2014, "X2014.")
+puhasEmpty=korrastaja2(dataFlatEmpty, "empty.")      
 
 #paneme kokku
 andmed=rbind(puhas2014, puhasEmpty)
@@ -85,22 +75,22 @@ andmed=rbind(puhas2014, puhasEmpty)
 andmed$variable=NULL
 
 ###############################KUI PALJU ON TASULISI TEENUSEID ametite lõikes
-library(jsonlite)
-data=fromJSON("teenused_all.json")
 #üldine
-table(data$makse)
+table(andmedLai$makse)
 #asutuste lõikes
-makseAsutus=as.data.frame(table(data$makse, data$allasutus))
+makseAsutus=as.data.frame(table(andmedLai$makse, andmedLai$allasutus))
 
 library(ggplot2)
 ggplot(makseAsutus, aes(x=Var2, y=Freq))+
-        geom_bar(stat="identity")+
+        geom_bar(stat="identity",  fill="lightblue")+
         facet_wrap(~Var1)+
+  theme_minimal()+
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggplot(makseAsutus, aes(x=Var1, y=Freq))+
-        geom_bar(stat="identity")+
+        geom_bar(stat="identity", fill="lightblue")+
         facet_wrap(~Var2)+
+  theme_minimal()+
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #sama asi protsentides
@@ -112,13 +102,16 @@ makseAsutuseLoikes=makseAsutus %>%
         mutate(protsent = Freq/n)
 #plotime
 ggplot(makseAsutuseLoikes, aes(x=Var2, y=protsent))+
-        geom_bar(stat="identity")+
+        geom_bar(stat="identity", fill="lightblue")+
         facet_wrap(~Var1)+
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme_minimal()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  coord_flip()
 
 ggplot(makseAsutuseLoikes, aes(x=Var1, y=protsent))+
-        geom_bar(stat="identity")+
+        geom_bar(stat="identity",fill="lightblue")+
         facet_wrap(~Var2)+
+  theme_minimal()+
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #######################KUI PALJU ON TASULISI TEENUSED KANALITE LÕIKES

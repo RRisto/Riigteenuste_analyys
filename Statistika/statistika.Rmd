@@ -1,5 +1,5 @@
 ---
-title: "Riigiteenuste statistika"
+title: "Riigiteenuste statistikat"
 author: "Risto Hinno"
 date: "23. november 2015"
 output: html_document
@@ -13,7 +13,7 @@ Kui andmed on sisse laetud ja pikaks tehtud saab teha statistikat. Enne lae lehe
 fromJsonLong=function(andmedJson) {
   library(tidyjson)
   library(dplyr)
-  andmedWide=andmedJson %>% 
+  andmedLai=andmedJson %>% 
     as.tbl_json %>% 
     gather_array %>% 
     spread_values(
@@ -172,9 +172,9 @@ fromJsonLong=function(andmedJson) {
       '2014.Kliendi juures.link'=jstring('teenuste_kanalid_ja_moodikud','2014','Kliendi juures','link')
     )
   #eemaldame sodi
-  andmedWide$document.id=NULL
-  andmedWide$array.index=NULL
-  andmedWide
+  andmedLai$document.id=NULL
+  andmedLai$array.index=NULL
+  andmedLai
 }
 
 ##pikaks tegemise abifunktsioonid
@@ -250,7 +250,7 @@ vars=names(andmedLai) %in% c("regulatsioon", "objectId", "eluarisyndmus", "kirje
                           "tegevusvaldkond", "teenusetyyp",
                             "ministeerium", "osakondyksus", "omanikunimi", 
                           "omanikuamet", "omanikutelefon","omanikuemail", 
-                          "makse", "konfinfo", "seotuddokumendid", "seisund", 
+                           "konfinfo", "seotuddokumendid", "seisund", 
                             "muudatustvajav", "aegumisekpv", "funktsioon", 
                           "veebiaadress")
 #eemaldame muutujad
@@ -290,40 +290,21 @@ visualiseerija=function(data, mapping, ylab) {
     scale_y_discrete(labels = percent)
 }
 
-##abifunktsion sihtgrupi andmete visualiseerimiseks
-sihtgruppStat=function(andmed) {
-  sihtgrupp=andmed[,c("allasutus","sihtgrupp")]
-  #loome sihtgrupi eraldi colmnitesse
-  sihtgrupp$kodanik=ifelse(grepl("Kodanik",andmed$sihtgrupp), "Kodanik", NA)
-  sihtgrupp$ettevotja=ifelse(grepl("Ettevõtja",andmed$sihtgrupp), "Ettevõtja", NA)
-  sihtgrupp$ametnik=ifelse(grepl("Ametnik",andmed$sihtgrupp), "Ametnik", NA)
-  #algset colmnit pole vaja
-  sihtgrupp$sihtgrupp=NULL
-  #meldime
-  library(reshape2)
-  sihtgruppMelt=melt(sihtgrupp, id=c("allasutus"), measure.vars = c("kodanik",
-                                                                    "ettevotja", 
-                                                                    "ametnik"))
-  #NAd eemaldame
-  sihtgruppMelt=sihtgruppMelt[complete.cases(sihtgruppMelt[3]),]
-  #arvutame välja
+#abifunktsioon andmete summeerimiseks
+summeerija=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
   library(dplyr)
-  Asutuse_sihtgrupi_loikes=sihtgruppMelt %>%
-    group_by(allasutus, value) %>%
-    summarize(teenusteArv=n())
-  #plotime
-  library(ggplot2)
-  ggplot(Asutuse_sihtgrupi_loikes, aes(x=allasutus, y=teenusteArv))+
-    geom_bar(stat = "identity", fill="lightblue")+
-    facet_wrap(~value)+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  tulem=data %>%
+    group_by_(...) %>%
+    summarize(stat_olemas_tk=sum(!is.na(value)),
+              max_stat=length(value), #ehk kui palju oleks kanali näitaja hulk
+              stat_olemas_pr=sum(!is.na(value))/length(value)) 
+  tulem
 }
-
 ```
 
 ###Näidised:
 
-- Asutuste lõikes olemasoleva statistika oskaal:
+- Asutuste lõikes olemasoleva statistika osakaal:
 ```{r, cache=TRUE, message=FALSE, warning=FALSE}
 #arvutame välja
 summaryAsutus =summeerija(data=andmedPikk, "allasutus")
@@ -334,7 +315,7 @@ visualiseerija(data=summaryAsutus, aes(x=jrk, y=stat_olemas_pr),
                "Näidikud olemas")
 ```
 
-- Kanalite lõikes olemasoleva statistika oskaal:
+- Kanalite lõikes olemasoleva statistika osakaal:
 
 ```{r, cache=TRUE}
 summaryKanal =summeerija(data=andmedPikk,  "kanal")
@@ -344,7 +325,7 @@ visualiseerija(data=summaryKanal, aes(x=jrk, y=stat_olemas_pr),
 ```
 
 
-- Näitajate lõikes olemasoleva statistika oskaal
+- Näitajate lõikes olemasoleva statistika osakaal
 
 ```{r, cache=TRUE}
 summaryNaitaja =summeerija(data=andmedPikk,  "naitaja")
@@ -362,5 +343,46 @@ sihtgruppStat(andmedLai)+
   coord_flip()+
   theme_minimal()
 
+```
+
+- Teenuste arv maksete lõikes
+
+```{r, cache=TRUE}
+table(andmedLai$makse)
+
+```
+
+- Teenuste arv asutuste ja maksete lõikes
+
+```{r, cache=TRUE}
+makseAsutus=as.data.frame(table(andmedLai$makse, andmedLai$allasutus))
+
+library(ggplot2)
+ggplot(makseAsutus, aes(x=Var2, y=Freq))+
+        geom_bar(stat="identity",  fill="lightblue")+
+        facet_wrap(~Var1)+
+  theme_minimal()+
+  xlab("")+
+  ylab("Teenuste arv")+
+        theme(axis.text.x = element_text(angle=90,hjust = 1))
+
+```
+
+- Teenuste arvu jagunemine maksete lõikes asutuste kaupa
+```{r, cache=TRUE}
+library(dplyr)
+makseAsutuseLoikes=makseAsutus %>%
+        group_by(Var2) %>%
+        mutate(n=sum(Freq)) %>%
+        group_by(Var1, add=TRUE) %>%
+        mutate(protsent = Freq/n)
+
+ggplot(makseAsutuseLoikes, aes(x=Var2, y=protsent))+
+        geom_bar(stat="identity", fill="lightblue")+
+        facet_wrap(~Var1)+
+  theme_minimal()+
+  xlab("")+
+  ylab("")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 

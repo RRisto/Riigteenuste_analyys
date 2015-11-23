@@ -1,16 +1,5 @@
 #####abifunktsioonid, näidised statistika tegemiseks
 
-#abifunktsioon andmete summeerimiseks
-summeerija=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
-  library(dplyr)
-  tulem=data %>%
-    group_by_(...) %>%
-    summarize(stat_olemas_tk=sum(!is.na(value)),
-              max_stat=length(value), #ehk kui palju oleks kanali näitaja hulk
-              stat_olemas_pr=sum(!is.na(value))/length(value)) 
-  tulem
-}
-
 #abifunktsioon andmete visualiseerimiseks
 visualiseerija=function(data, mapping, ylab) {
   #localenv <- environment()
@@ -26,7 +15,7 @@ visualiseerija=function(data, mapping, ylab) {
     scale_y_discrete(labels = percent)
 }
 
-##abifunktsion sihtgrupi andmete visualiseerimiseks
+##abifunktsioon sihtgrupi andmete visualiseerimiseks
 sihtgruppStat=function(andmed) {
   sihtgrupp=andmed[,c("allasutus","sihtgrupp")]
   #loome sihtgrupi eraldi colmnitesse
