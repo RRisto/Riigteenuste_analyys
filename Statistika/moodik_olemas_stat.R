@@ -1,5 +1,15 @@
 #####abifunktsioonid, näidised statistika tegemiseks
 
+#abifunktsioon andmete summeerimiseks
+summeerija=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
+  library(dplyr)
+  tulem=data %>%
+    group_by_(...) %>%
+    summarize(stat_olemas_tk=sum(!is.na(value)),
+              max_stat=length(value), #ehk kui palju oleks kanali näitaja hulk
+              stat_olemas_pr=sum(!is.na(value))/length(value)) 
+  tulem
+}
 #abifunktsioon andmete visualiseerimiseks
 visualiseerija=function(data, mapping, ylab) {
   #localenv <- environment()
@@ -13,6 +23,21 @@ visualiseerija=function(data, mapping, ylab) {
     ylab(ylab)+
     coord_cartesian(ylim=c(0,1))+
     scale_y_discrete(labels = percent)
+}
+
+#ilma %deta
+visualiseerija2=function(data, mapping, ylab) {
+  #localenv <- environment()
+  library(ggplot2)
+  #library(scales)
+  ggplot(data, mapping)+
+    geom_bar(stat = "identity", fill="lightblue")+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 45, hjust=1, size=13))+
+    xlab("")+
+    ylab(ylab)#+
+    #coord_cartesian(ylim=c(0,1))#+
+    #scale_y_discrete(labels = percent)
 }
 
 ##abifunktsioon sihtgrupi andmete visualiseerimiseks
@@ -64,6 +89,15 @@ summaryAsutusNaitaja =summeerija(data=andmedPikk, "allasutus", "naitaja")
 #tõenäosus, et stat on olemas asutuste lõikes
 summaryAsutus =summeerija(data=andmedPikk, "allasutus")
 
+#tõenäosus, et stat on olemas ministeeriumite lõikes
+summaryMin =summeerija(data=andmedPikk, "ministeerium")
+
+#tõenäosus, et stat on ministeeriumite, näitajate lõikes olemas
+summaryMinNaitaja =summeerija(data=andmedPikk, "ministeerium", "naitaja")
+
+#summeerime iga ministeeriumi kõikide kanalite ja näitajate lõikes 
+summaryMinKanalNait =summeerija(data=andmedPikk,  "ministeerium", "kanal", "naitaja")
+
 ######################visualiseerimine
 
 #visualiseerime asutustes lõikes olemaosleva stati osakaalu
@@ -96,6 +130,14 @@ visualiseerija(data=summaryAsutusNaitaja, aes(x=jrk, y=stat_olemas_pr),
                "Olemasolevate näidikute osakaal")+
   facet_wrap(~allasutus)
 
+#minsteeriumi ja näitaja lõikes
+summaryMinNaitaja <- transform(summaryMinNaitaja, 
+                                  jrk = reorder(naitaja,-stat_olemas_pr))
+
+visualiseerija(data=summaryMinNaitaja, aes(x=jrk, y=stat_olemas_pr), 
+               "Olemasolevate näidikute osakaal")+
+  facet_wrap(~ministeerium)
+
 ####################üldine stat
 #teenuste arv asutuste lõikes
 teenusteArv=as.data.frame(table(andmedLai$allasutus))
@@ -112,6 +154,34 @@ kanaliteArv$teenuste_arv=teenusteArv$Freq
 #keskmine kanalite arv teenuse kohta asutuste lõikes
 kanaliteArv$KeskKanaliteArv=kanaliteArv$kanal_arv/kanaliteArv$teenuste_arv
 
+##teenuste arv kanalites
+summaryTeenustKanalis =summeerija(data=andmedPikk,  "naitaja")
+
+summeerija2=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
+  library(dplyr)
+  tulem=data %>%
+    group_by_(...) %>%
+    summarize(arv=n()) 
+  #jrk õigeks
+  tulem <- transform(tulem,jrk = reorder(kanal,-arv))
+  tulem
+}
+
+summaryTeenustKanalis=summeerija2(andmedPikk, c("kanal"))
+
+visualiseerija2(data=summaryTeenustKanalis, aes(x=kanal, y=arv), 
+               "Teenuste arv kanalis")
+
+
+summeerija2=function(data, ...) { #... paned jutumärkidesse variabled mille järgi grupeerida
+  library(dplyr)
+  tulem=data %>%
+    group_by_(...) %>%
+    summarize(arv=n()) 
+  #jrk õigeks
+  tulem <- transform(tulem,jrk = reorder(kanal,-arv))
+  tulem
+}
 #############tahan infot asutuse ja sihtgrupi lõikes
 sihtgruppStat(andmedLai)
 

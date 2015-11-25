@@ -4,11 +4,9 @@
 #fromJsonWide funktsiooni, et neid üldse sisse ei loetaks)
 vars=names(andmedLai) %in% c("regulatsioon", "objectId", "eluarisyndmus", "kirjeldus", 
                             "eeltingimus", "jareltingimus", "createdAt", 
-                          "updatedAt", "keel",  "identifikaator", 
-                          "tegevusvaldkond", "sihtgrupp", "teenusetyyp",
-                            "ministeerium", "osakondyksus", "omanikunimi", 
+                          "updatedAt", "keel", "osakondyksus", "omanikunimi", 
                           "omanikuamet", "omanikutelefon","omanikuemail", 
-                          "makse", "konfinfo", "seotuddokumendid", "seisund", 
+                           "konfinfo", "seotuddokumendid", "seisund", 
                             "muudatustvajav", "aegumisekpv", "funktsioon", 
                           "veebiaadress")
 #eemaldame muutujad
@@ -23,9 +21,9 @@ andmedLaiEmpty=andmedLai[, !grepl("X2014.", names(andmedLai))]
 meltimine=function(kanal, data) {
   library(reshape2)
   #leiame ainult seda kanalit puudutavad muutujad
-  sub=data[, grepl(paste(kanal, "|nimetus|allasutus", sep=""), names(data))]
+  sub=data[, grepl(paste(kanal, "|identifikaator|ministeerium|allasutus|tegevusvaldkond|teenusetyyp|makse", sep=""), names(data))]
   #määran id-d, mis meltimisel meltimata jäävad
-  id=grep(c("nimetus|allasutus|link"), names(sub), value=T)
+  id=grep(c("identifikaator|ministeerium|allasutus|tegevusvaldkond|teenusetyyp|makse|link"), names(sub), value=T)
   #kui selle kanali kohta stati pole, anna vastuseks null
   if(length(id)<=2) {
     tulem=NULL
@@ -33,7 +31,8 @@ meltimine=function(kanal, data) {
     #meldime andmed kitsaks
     tulem=melt(sub, id=id)
     #muudan variable nime ära, mis on kanalispets, muidu ei saa rbindida
-    names(tulem)=c("nimetus", "allasutus", "link", "variable",           
+    names(tulem)=c("identifikaator", "tegevusvaldkond", "tyyp", "ministeerium", "allasutus",  
+                   "makse", "link",  "variable",           
                    "value")
   }
   tulem
@@ -56,7 +55,7 @@ korrastaja=function(andmed, eemalda) {
   telefon=meltimine("Telefon.", data=andmed)
   faks=meltimine("Faks.", data=andmed)
   post=meltimine("Post.", data=andmed)
-  lett=meltimine("Letiteenus", data=andmed)
+  lett=meltimine("Letiteenus.", data=andmed) #võib muutuda! vaja ka gsubi siis lisada
   kodus=meltimine("Kliendi.juures.", data=andmed)
   #rbindime
   koos=rbind(veeb, iseteen, eesti, nuti, digitv, epost, sms, telefon, faks, 
@@ -65,6 +64,7 @@ korrastaja=function(andmed, eemalda) {
   #kanal <- strsplit(as.character(koos$variable), split ="\\.\\w{1,}$")
   #stati saamiseks eemaldame punktid kanali nimedest
   koos$variable=gsub(".ee.", ".", as.character(koos$variable), fixed=T)
+  #skoos$variable=gsub("Letiteenus.büroos", "Letiteenus", as.character(koos$variable), fixed=T)
   koos$variable=gsub("E.iseteenindus", "Eiseteenindus", as.character(koos$variable), fixed=T)
   koos$variable=gsub("E.post", "Epost", as.character(koos$variable), fixed=T)
   koos$variable=gsub("Veebileht...portaal", "Veebileht", as.character(koos$variable), fixed=T)
@@ -94,3 +94,6 @@ andmedPikk=rbind(puhas2014, puhasEmpty)
 #salvesta
 failinimi=paste0(Sys.Date(), "_andmedPikk.csv")
 write.table(andmedPikk, failinimi, sep=";", row.names = F)
+
+failinimitxt=paste0(Sys.Date(), "_andmedPikk.txt")
+write.table(andmedPikk, failinimitxt, sep=";", row.names = F)
