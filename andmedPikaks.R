@@ -94,7 +94,13 @@ andmedPikk=rbind(puhas2014, puhasEmpty)
 #salvesta
 failinimi=paste0(Sys.Date(), "_andmedPikk.csv")
 write.table(andmedPikk, failinimi, sep=";", row.names = F)
-
+#txt
 failinimitxt=paste0(Sys.Date(), "_andmedPikk.txt")
 write.table(andmedPikk, failinimitxt, sep=";", row.names = F)
-write.table(andmedPikk, failinimi, row.names = F, sep=",",fileEncoding="UTF-8")
+
+#csv õige encodinguga
+write.csv(andmedPikk, failinimi, row.names = F, sep=",",fileEncoding="UTF-8")
+
+#rds
+failinimirds=paste0(Sys.Date(), "_andmedPikk.rds")
+saveRDS(andmedPikk, failinimirds)
