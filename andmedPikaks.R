@@ -97,3 +97,4 @@ write.table(andmedPikk, failinimi, sep=";", row.names = F)
 
 failinimitxt=paste0(Sys.Date(), "_andmedPikk.txt")
 write.table(andmedPikk, failinimitxt, sep=";", row.names = F)
+write.table(andmedPikk, failinimi, row.names = F, sep=",")
