@@ -2,6 +2,8 @@
 
 Riigiteenuste andmed, mis on masinloetaval kujul, analüsimise skriptide kogum. Andmed on JSON formaadis kättesaadavad [siit](https://www.riigiteenused.ee/api/et/all "https://www.riigiteenused.ee/api/et/all"). Kogu projekti kohta loe [siit](https://github.com/MKM-ITAO/riigiteenused "https://github.com/MKM-ITAO/riigiteenused").
 
+### <span style="color:red">HOIATUS! Kuna tegemist on pilootprojektiga ning metoodika teenuste kirjeldamise ja mõõtmise osas alles väljatöötamisel, on andmetest järelduste tegemine omal vastutusel!</span>
+
 ###Retsept, kuidas andmed sisse saada
 
 - Loe sisse funktsioonid lehtedelt [andmedLai.r](https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedLai.R "https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedLai.R"), [andmedPikaks.r](https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedPikaks.R "https://github.com/RRisto/Riigteenuste_analyys/blob/master/andmedPikaks.R")
