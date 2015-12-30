@@ -104,3 +104,35 @@ write.csv(andmedPikk, failinimi, row.names = F, sep=",",fileEncoding="UTF-8")
 #rds
 failinimirds=paste0(Sys.Date(), "_andmedPikk.rds")
 saveRDS(andmedPikk, failinimirds)
+
+##############funktsioon, mis ühe käsuga tõmaba andmed sisse ja teeb pikaks
+DataLong=function(url) {
+  andmedLai=fromJsonLong(andmedJson=readLines(url))
+  #kui tahad salvestada:
+  failinimi=paste0(Sys.Date(), "_andmedLai.csv")
+  write.table(andmedLai, failinimi, sep=";", row.names = F)
+  vars=names(andmedLai) %in% c("regulatsioon", "objectId", "eluarisyndmus", "kirjeldus", 
+                               "eeltingimus", "jareltingimus", "createdAt", 
+                               "updatedAt", "keel", "osakondyksus", "omanikunimi", 
+                               "omanikutelefon","omanikuemail", 
+                               "konfinfo", "seotuddokumendid", "seisund", 
+                               "muudatustvajav", "aegumisekpv", "funktsioon", 
+                               "veebiaadress")
+  #eemaldame muutujad
+  andmedLai=andmedLai[,!vars]
+  #aastate põhjal teeme andmed 2-ks (kui aastaid rohkem siis vastavalt sellele
+  #arv muutub)
+  andmedLai2014=andmedLai[, !grepl("empty.", names(andmedLai))]
+  andmedLaiEmpty=andmedLai[, !grepl("X2014.", names(andmedLai))]
+  puhas2014=korrastaja(andmedLai2014, "X2014.")
+  puhasEmpty=korrastaja(andmedLaiEmpty, "empty.")
+  #paneme andme kokku
+  andmedPikk=rbind(puhas2014, puhasEmpty)
+  return(andmedPikk)
+}
+
+
+###test
+andmedPikk=DataLong("https://www.riigiteenused.ee/api/et/all")
+failinimirds=paste0(Sys.Date(), "_andmedPikk.rds")
+saveRDS(andmedPikk, failinimirds)

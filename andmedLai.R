@@ -9,12 +9,44 @@ andmedSisse=function(url) {
   
   #loeme andmed sisse
   library(jsonlite)
-  andmed=fromJSON(failinimi, flatten=T)
+  library(data.table)
+  andmed=fromJSON(readLines("https://www.riigiteenused.ee/api/et/all"), flatten=T)
+  andmed=andmed["teenuste_kanalid_ja_moodikud"!="list()"]
+  andmedMoodik <- rbindlist(lapply(andmed[["teenuste_kanalid_ja_moodikud"]], function(x) {
+    as.list(unlist(x))
+  }), fill=TRUE)
+  
   andmed
 }
 #näide
 andmed=andmedSisse("https://www.riigiteenused.ee/api/et/all")
 
+###uuendatud versioon, ei downloadi arvutisse faili, kasutab data tabelit
+andmedSisse=function(url, poleVajaVar) {
+  #poleVajaVar=read, mis eemdaldatakse
+  #loeme andmed sisse
+  library(jsonlite)
+  library(data.table)
+  andmed=data.table(fromJSON(readLines(url), flatten=T))
+  andmed=andmed[teenuste_kanalid_ja_moodikud!="list()"]
+  moodik <- rbindlist(lapply(andmed[["teenuste_kanalid_ja_moodikud"]], function(x) {
+    as.list(unlist(x))
+  }), fill=TRUE)
+  andmed[, c(poleVajaVar):=NULL] #kindlasti peab olema eemaldatud: 
+  #"teenuste_kanalid_ja_moodikud", "sihtgrupp", "regulatsioon"
+  andmed=cbind(andmed, moodik)
+  andmed
+}
+
+#näide
+andmed=andmedSisse("https://www.riigiteenused.ee/api/et/all",
+                   c("teenuste_kanalid_ja_moodikud", "sihtgrupp", "regulatsioon",
+                     "createdAt", "objectId", "updatedAt", "keel", "eluarisyndmus",
+                     "kirjeldus", "osakondyksus", "omanikunimi", "omanikuamet",
+                     "omanikutelefon", "omanikuemail", "konfinfo", "eeltingimus",
+                     "jareltingimus", "seotuddokumendid", "muudatustvajav", 
+                     "aegumisekpv","funktsioon", "veebiaadress", "seisund", 
+                     "makse", "teenusetyyp", "tegevusvaldkond"))
 ########################
 
 #funktsioon jsoni failist andmete sisselugemist laiaks formaadiks. Statistika ja
