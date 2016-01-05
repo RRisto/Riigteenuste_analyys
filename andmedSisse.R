@@ -60,8 +60,7 @@ korrastaja=function(andmed, eemalda) {
   #lisame algsesse andmestikku
   koos$kanal=df[,2]
   koos$naitaja=df[,3]
-  #viskame välja tühjad read, kus pole linki
-  koos=koos[!is.na(koos$link),]
+  #teeme numbriliseks
   koos$value=as.numeric(as.character(koos$value))
   koos
 } 
@@ -92,14 +91,22 @@ DataLong2=function(andmedLai) {
   andmedLai=andmedLai[,!vars]
   #aastate põhjal teeme andmed 2-ks (kui aastaid rohkem siis vastavalt sellele
   #arv muutub)
-  andmedLai2014=andmedLai[, !grepl("empty.|2011.", names(andmedLai))]
-  andmedLai2011=andmedLai[, !grepl("empty.|2014.", names(andmedLai))]
-  andmedLaiEmpty=andmedLai[, !grepl("2014.|2011.", names(andmedLai))]
+  andmedLai2015=andmedLai[, !grepl("empty.|2011.|2013.|2012.|2014.", names(andmedLai))]
+  andmedLai2014=andmedLai[, !grepl("empty.|2011.|2013.|2012.|2015.", names(andmedLai))]
+  andmedLai2013=andmedLai[, !grepl("empty.|2011.|2012.|2014.|2015.", names(andmedLai))]
+  andmedLai2012=andmedLai[, !grepl("empty.|2011.|2013.|2014.|2015.", names(andmedLai))]
+  andmedLai2011=andmedLai[, !grepl("empty.|2014.|2013.|2012.|2015.", names(andmedLai))]
+  andmedLaiEmpty=andmedLai[, !grepl("2014.|2011.|2013.|2012.|2015.", names(andmedLai))]
+  puhas2015=korrastaja(andmedLai2015, "2015.")
   puhas2014=korrastaja(andmedLai2014, "2014.")
-  puhasEmpty=korrastaja(andmedLaiEmpty, "empty.")
+  puhas2013=korrastaja(andmedLai2013, "2013.")
+  puhas2012=korrastaja(andmedLai2012, "2012.")
   puhas2011=korrastaja(andmedLai2011, "2011.")
-  #paneme andme kokku
-  andmedPikk=rbind(puhas2014, puhas2011,puhasEmpty)
+  puhasEmpty=korrastaja(andmedLaiEmpty, "empty.")
+  #paneme andmed kokku
+  andmedPikk=rbind(puhas2015, puhas2014,puhas2013,puhas2012, puhas2011,puhasEmpty)
+  #eemaldame read, kus pole linki
+  andmedPikk=andmedPikk[!is.na(andmedPikk$link),]
   andmedPikk
 }
 
